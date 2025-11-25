@@ -1,19 +1,21 @@
 package com.example.coolpokedex.viewmodel
 
-import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.coolpokedex.data.model.pokemon.PokemonDetailInfo
 import com.example.coolpokedex.data.network.ApiResponse
-import com.example.coolpokedex.data.network.RetrofitInstance
 import com.example.coolpokedex.data.repository.PokemonRepository
-import androidx.compose.runtime.State
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class PokemonDetailScreenViewModel : ViewModel() {
+@HiltViewModel
+class PokemonDetailScreenViewModel @Inject constructor(
+    private val pokemonRepository: PokemonRepository
+) : ViewModel() {
 
-    private val pokemonRepository = PokemonRepository(RetrofitInstance.api)
     private val _pokemonDetailScreenState = mutableStateOf(PokemonDetailUiState(pokemon = null))
     val pokemonDetailScreenState: State<PokemonDetailUiState> = _pokemonDetailScreenState
 

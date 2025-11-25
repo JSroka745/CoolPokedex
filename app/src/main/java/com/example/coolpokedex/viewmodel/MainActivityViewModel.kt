@@ -6,14 +6,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.coolpokedex.data.model.pokemon.PokemonDetailInfo
 import com.example.coolpokedex.data.network.ApiResponse
-import com.example.coolpokedex.data.network.RetrofitInstance
 import com.example.coolpokedex.data.repository.PokemonRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@HiltViewModel
+class MainActivityViewModel @Inject constructor(
+    private val pokemonRepository: PokemonRepository
+) : ViewModel() {
 
-class MainActivityViewModel : ViewModel() {
-
-    private val pokemonRepository = PokemonRepository(RetrofitInstance.api)
     private val _pokemonListState = mutableStateOf(PokemonListUiState())
     val pokemonListState: State<PokemonListUiState> = _pokemonListState
 
