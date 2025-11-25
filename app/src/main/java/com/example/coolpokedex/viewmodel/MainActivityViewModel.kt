@@ -1,19 +1,13 @@
 package com.example.coolpokedex.viewmodel
 
-import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.coolpokedex.data.model.pokemon.PokemonDetailInfo
-import com.example.coolpokedex.data.model.pokemonList.PokemonListResponse
 import com.example.coolpokedex.data.network.ApiResponse
 import com.example.coolpokedex.data.network.RetrofitInstance
 import com.example.coolpokedex.data.repository.PokemonRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -23,15 +17,16 @@ class MainActivityViewModel : ViewModel() {
     private val _pokemonListState = mutableStateOf(PokemonListUiState())
     val pokemonListState: State<PokemonListUiState> = _pokemonListState
 
-    private var currentPage = 0;
+    private var currentPage = 0
     private var limit = 20
+    private var endReached = false
 
     init {
         loadPokemonList()
     }
 
     fun loadPokemonList() {
-        if (pokemonListState.value.isLoading) {
+        if (pokemonListState.value.isLoading || endReached) {
             return
         }
         viewModelScope.launch() {
@@ -43,7 +38,9 @@ class MainActivityViewModel : ViewModel() {
                 is ApiResponse.Success -> {
                     _pokemonListState.value = _pokemonListState.value.copy(
                         pokemons = _pokemonListState.value.pokemons + result.data,
-                        isLoading = false)
+                        isLoading = false
+                    )
+                    if (result.data.size < limit) endReached = true
                     currentPage++
                 }
 
@@ -55,7 +52,7 @@ class MainActivityViewModel : ViewModel() {
                 }
 
                 is ApiResponse.Loading -> {
-                    //_pokemonListState.value.isLoading == true
+                    _pokemonListState.value.isLoading == true
                 }
             }
         }
