@@ -1,6 +1,7 @@
 package com.example.coolpokedex.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,14 +27,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.coolpokedex.data.model.pokemon.PokemonDetailInfo
 import com.example.coolpokedex.data.model.pokemon.Stat
@@ -41,7 +47,7 @@ import com.example.coolpokedex.utils.ColorUtil
 import com.example.coolpokedex.viewmodel.PokemonDetailScreenViewModel
 
 @Composable
-fun PokemonDetailScreen(id: Int, viewModel: PokemonDetailScreenViewModel = viewModel()) {
+fun PokemonDetailScreen(id: Int, onSwipeLeft: () -> Unit = {}, onSwipeRight: () -> Unit = {}, viewModel: PokemonDetailScreenViewModel = hiltViewModel<PokemonDetailScreenViewModel>()) {
 
 
     val pokemonState = viewModel.pokemonDetailScreenState
@@ -50,6 +56,36 @@ fun PokemonDetailScreen(id: Int, viewModel: PokemonDetailScreenViewModel = viewM
     LaunchedEffect(true) {
         viewModel.loadPokemon(id.toString())
     }
+
+    var offsetX by remember { mutableStateOf(0f) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        // Po zakończeniu przeciągania resetujemy przesunięcie
+                        offsetX = 0f
+                    },
+                    onHorizontalDrag = { change, dragAmount ->
+                        offsetX += dragAmount
+                        // Ustawiamy próg, po którym gest jest uznawany za "swipe"
+                        val swipeThreshold = 200 // Możesz dostosować tę wartość
+
+                        if (offsetX > swipeThreshold) {
+                            onSwipeRight()
+                            offsetX = 0f
+                        } else if (offsetX < -swipeThreshold) {
+                            onSwipeLeft()
+                            offsetX = 0f // Reset
+                        }
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ){
+
 
     when {
         pokemonState.value.isLoading -> {
@@ -69,7 +105,7 @@ fun PokemonDetailScreen(id: Int, viewModel: PokemonDetailScreenViewModel = viewM
         pokemonState.value.pokemon != null -> {
             PokemonDetail(pokemonState.value.pokemon!!)
         }
-    }
+    }}
 
 }
 
@@ -95,16 +131,16 @@ fun PokemonDetail(pokemon: PokemonDetailInfo, topPadding: Dp = 60.dp) {
                     .zIndex(1f)
                     .weight(0.2f)
                     .fillMaxSize()
-                    //.align(Alignment.CenterHorizontally)
+                //.align(Alignment.CenterHorizontally)
             ) {
                 AsyncImage(
                     model = pokemon.imgUrl,
                     contentDescription = "pokemon id:${pokemon.id}",
-                   // alignment = Alignment.Center,
+                    // alignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxSize()
                         .offset(y = topPadding),
-                    )
+                )
             }
 
             Surface(

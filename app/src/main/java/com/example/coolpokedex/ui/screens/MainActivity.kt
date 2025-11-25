@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -33,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -43,9 +47,10 @@ import com.example.coolpokedex.data.model.pokemon.PokemonDetailInfo
 import com.example.coolpokedex.ui.theme.CoolPokedexTheme
 import com.example.coolpokedex.utils.ColorUtil
 import com.example.coolpokedex.viewmodel.MainActivityViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +68,7 @@ class MainActivity : ComponentActivity() {
 object PokemonList
 
 @Serializable
-data class PokemonDetail(var pokeId: Int)
+data class PokemonDetail(var pokeId: Int = 0)
 
 
 @Composable
@@ -72,20 +77,43 @@ fun myApp(modifier: Modifier = Modifier) {
     NavHost(navController, startDestination = PokemonList, modifier = modifier) {
         composable<PokemonList> {
             PokemonListScreen(
+                viewModel = hiltViewModel<MainActivityViewModel>(),
                 onPokemonClick = { id ->
                     navController.navigate(PokemonDetail(id))
                 }
             )
         }
+
         composable<PokemonDetail> { backStackEntry ->
             val args = backStackEntry.toRoute<PokemonDetail>()
-            PokemonDetailScreen(id = args.pokeId)
+
+            PokemonDetailScreen(
+                id = args.pokeId,
+                onSwipeLeft = {
+                    val nextId = args.pokeId + 1
+                    navController.navigate(PokemonDetail(nextId)) {
+                        popUpTo(PokemonDetail(args.pokeId)) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onSwipeRight = {
+                    if (args.pokeId > 1) {
+                        val prevId = args.pokeId - 1
+                        navController.navigate(PokemonDetail(prevId)) {
+                            popUpTo(PokemonDetail(args.pokeId)) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                }
+            )
         }
     }
 }
 
 @Composable
-fun PokemonListScreen(onPokemonClick: (Int) -> Unit, viewModel: MainActivityViewModel = viewModel()) {
+fun PokemonListScreen(onPokemonClick: (Int) -> Unit, viewModel: MainActivityViewModel = hiltViewModel<MainActivityViewModel>()) {
     val pokemons = viewModel.pokemonListState.value.pokemons
     val error = viewModel.pokemonListState.value.error
     val listState = rememberLazyListState()

@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
+    id("kotlin-kapt")
+    alias(libs.plugins.hilt.android)
 }
 
 apply<myTest>()
@@ -77,4 +79,12 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //Dagger-Hilt
+
+    implementation("com.google.dagger:hilt-android:2.54")
+    kapt("com.google.dagger:hilt-android-compiler:2.54")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
+    kapt("androidx.hilt:hilt-navigation-compose:1.3.0")
 }
